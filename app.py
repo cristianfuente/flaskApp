@@ -1,11 +1,15 @@
+from crypt import methods
+from http.client import OK
 from flask import Flask, request
 from shadowd.flask_connector import InputFlask, OutputFlask, Connector
-from flask_mysqldb import MySQL
+from flaskext.mysql import MySQL
 from config import config
 
 app = Flask(__name__)
 
-conexion=MySQL(app)
+mysql = MySQL()
+app.config.from_object(config['connection'])
+mysql.init_app(app)
 
 @app.before_request
 def before_req():
@@ -14,7 +18,17 @@ def before_req():
 
     Connector().start(input, output)
 
+@app.route('/consulta',methods=['GET'])
+def consulta():
+    try:
+        conn = mysql.connect()
+        cursor = conn.cursor()
+        conn.commit()
+        cursor.close()
+        return 'ok'
+    except Exception as ex:
+        return 'Error'+str(ex) 
 
 if __name__ == '__main__':
-    app.config.from_object(config['connection'])
+
     app.run()

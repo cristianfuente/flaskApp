@@ -1,6 +1,7 @@
 from crypt import methods
 from http.client import OK
-from flask import Flask, request
+import json
+from flask import Flask, request,jsonify
 from shadowd.flask_connector import InputFlask, OutputFlask, Connector
 from flaskext.mysql import MySQL
 from config import config
@@ -18,14 +19,21 @@ def before_req():
 
     Connector().start(input, output)
 
-@app.route('/consulta',methods=['GET'])
+@app.route('/consultaByDoc',methods=['GET'])
 def consulta():
     try:
         conn = mysql.connect()
-        cursor = conn.cursor()
-        conn.commit()
-        cursor.close()
-        return 'ok'
+        cursor=conn.cursor()
+        docFind=request.args.get('doc')
+        placa=request.args.get('placa')
+        query="SELECT * from Users WHERE documento = '{}' and placa = {}".format(docFind,placa)
+        cursor.execute(query)
+        data=cursor.fetchall()
+        json_data=[]
+        for r in data:
+            cons={'nombre':r[1],'documento':r[2],'correo':r[3],'telfono':r[4]}
+            json_data.append(cons)
+        return jsonify(json_data)
     except Exception as ex:
         return 'Error'+str(ex) 
 
